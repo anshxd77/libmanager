@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonam — Institutional Library Management & Archival Circulation</title>
+    <meta name="description" content="Executive-grade web-based institutional library management system with Firebase integration and high-precision circulation ledger.">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="app-sidebar">
+            <div class="sidebar-header">
+                <div class="brand-crest">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                        <polyline points="2 17 12 22 22 17"/>
+                        <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                </div>
+                <div class="brand-title">
+                    <span class="brand-name">Sonam</span>
+                    <span class="brand-subtitle">Archives & Library</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Operations</div>
+                <a class="nav-item active" data-view="circulation">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                        <line x1="6" y1="8" x2="6" y2="16"/>
+                        <line x1="10" y1="8" x2="10" y2="16"/>
+                        <line x1="14" y1="8" x2="14" y2="16"/>
+                        <line x1="18" y1="8" x2="18" y2="16"/>
+                    </svg>
+                    <span>Circulation</span>
+                    <span class="nav-item-badge" id="badge-circulation-count">0</span>
+                </a>
+                <a class="nav-item" data-view="catalog">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                    <span>Catalog</span>
+                </a>
+
+                <div class="nav-section-title">Collections</div>
+                <a class="nav-item" data-view="patrons">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span>Patrons</span>
+                </a>
+                <a class="nav-item" data-view="fines">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="12" y1="1" x2="12" y2="23"/>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    <span>Financials</span>
+                    <span class="nav-item-badge" id="badge-fines-count">$0</span>
+                </a>
+
+                <div class="nav-section-title">Insights</div>
+                <a class="nav-item" data-view="telemetry">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                    <span>Analytics</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="db-status-pill" id="firebase-status-capsule" title="Click to view database connection status">
+                    <div class="status-dot online" id="firebase-indicator-dot"></div>
+                    <div class="db-status-text">
+                        <span class="db-name" id="firebase-indicator-text">Local Archive</span>
+                        <span class="db-sub">Connected</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN VIEW PORT -->
+        <main class="app-main">
+            <!-- TOP APPLICATION BAR -->
+            <header class="app-header">
+                <div class="header-left">
+                    <div class="header-title-block">
+                        <h1 class="view-heading" id="current-view-title">Circulation</h1>
+                        <span class="view-subhead" id="current-view-subhead">Daily circulation workspace</span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <button class="command-palette-btn" id="topbar-command-trigger">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <span>Search catalog...</span>
+                        <span class="kbd-shortcut">Ctrl+K</span>
+                    </button>
+
+                    <!-- User Profile Button & Dropdown -->
+                    <div class="user-profile-wrap">
+                        <button class="user-profile-btn" id="topbar-user-btn" title="Manage Account or Sign In">
+                            <div class="user-avatar-circle" id="topbar-avatar-initials">EV</div>
+                            <div class="user-name-role">
+                                <span class="user-display-name" id="topbar-user-name-display">Eleanor Vance</span>
+                                <span class="badge badge-available" id="topbar-user-role-badge">ADMIN</span>
+                            </div>
+                        </button>
+                        
+                        <div class="user-profile-dropdown" id="user-profile-dropdown">
+                            <div class="dropdown-user-header">
+                                <div class="dropdown-avatar" id="dropdown-user-avatar">EV</div>
+                                <div class="dropdown-user-info">
+                                    <div class="dropdown-user-name" id="dropdown-user-name">Eleanor Vance</div>
+                                    <div class="dropdown-user-email" id="dropdown-user-email">admin@sonam.edu</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-meta-strip">
+                                <span style="color: var(--text-muted);">Library ID</span>
+                                <span class="dropdown-meta-card" id="dropdown-user-card">ATH-ADMIN-01</span>
+                            </div>
+                            <div class="dropdown-menu-list">
+                                <button class="dropdown-menu-item" id="dropdown-btn-loans">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="16"/><line x1="10" y1="8" x2="10" y2="16"/></svg>
+                                    <span>Circulation Desk</span>
+                                </button>
+                                <button class="dropdown-menu-item" id="dropdown-btn-switch">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                                    <span>Switch Account / Sign In</span>
+                                </button>
+                                <div class="dropdown-menu-divider"></div>
+                                <button class="dropdown-menu-item logout-item" id="dropdown-btn-logout">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                    <span>Sign Out</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-icon theme-toggle-btn" id="topbar-theme-toggle" title="Toggle Light / Dark Mode">
+                        <svg id="theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </button>
+
+                    <div class="header-clock" id="topbar-live-clock">--:--:--</div>
+                </div>
+            </header>
+
+            <!-- ============================================================
+                 VIEW 1: CIRCULATION DESK (DISTINCTIVE EDITORIAL PRODUCT DESIGN)
+                 ============================================================ -->
+            <section class="view-content active" id="view-circulation">
+                <div class="circulation-page-container">
+                    <!-- 1. Editorial Page Header -->
+                    <header class="editorial-page-hero">
+                        <div class="hero-eyebrow">Circulation</div>
+                        <div class="hero-headline-row">
+                            <h1 class="hero-title">Circulation Desk</h1>
+                            <div class="hero-status-tag">
+                                <span class="status-pulse-dot"></span>
+                                <span>Scanner ready</span>
+                            </div>
+                        </div>
+                        <p class="hero-subtitle">Manage today's loans, returns and borrowers.</p>
+                    </header>
+
+                    <!-- 2. Primary Circulation Workspace (Hero Component) -->
+                    <div class="circulation-workspace-hero">
+                        <div class="workspace-header">
+                            <div class="workspace-header-title">
+                                <span class="workspace-kicker">Quick Circulation</span>
+                                <h2 class="workspace-heading">Start a new circulation</h2>
+                                <p class="workspace-desc">Scan a patron and an item to continue.</p>
+                            </div>
+                            <div class="workspace-header-badge">
+                                <span class="pulse-dot-amber"></span>
+                                <span>Ready</span>
+                            </div>
+                        </div>
+
+                        <!-- Numbered 2-Step Workflow Grid -->
+                        <div class="workspace-workflow-grid">
+                            <!-- 01 PATRON / STUDENT STEP -->
+                            <div class="workflow-column">
+                                <div class="workflow-step-badge">
+                                    <span class="step-index">01</span>
+                                    <span class="step-name">Student / Patron</span>
+                                </div>
+                                <div class="workflow-input-wrap" style="position: relative;">
+                                    <svg class="workflow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                    <input type="text" class="workflow-input" id="scan-patron-input" placeholder="Search student name (e.g. Aarav, Sophia), ID, or email..." autocomplete="off" />
+                                    <button type="button" class="input-clear-btn" id="btn-clear-patron-search" style="display:none;" title="Clear search">&times;</button>
+                                    <!-- Live Autocomplete Dropdown for Enrolled Students -->
+                                    <div class="autocomplete-dropdown" id="patron-autocomplete-dropdown"></div>
+                                </div>
+                                <!-- Inline Patron Dossier / Empty State -->
+                                <div class="workflow-dossier-preview" id="patron-dossier-panel">
+                                    <div class="dossier-empty">
+                                        <span class="empty-kicker">Borrower</span>
+                                        <div class="empty-title">No student or patron selected</div>
+                                        <div class="empty-desc">Search by student name or scan membership card above.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 02 BOOK STEP -->
+                            <div class="workflow-column">
+                                <div class="workflow-step-badge">
+                                    <span class="step-index">02</span>
+                                    <span class="step-name">Book / Holding</span>
+                                </div>
+                                <div class="workflow-input-wrap" style="position: relative;">
+                                    <svg class="workflow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                                    </svg>
+                                    <input type="text" class="workflow-input" id="scan-barcode-input" placeholder="Search book title (e.g. Algorithms), ISBN, or barcode..." autocomplete="off" />
+                                    <button type="button" class="input-clear-btn" id="btn-clear-barcode-search" style="display:none;" title="Clear search">&times;</button>
+                                    <!-- Live Autocomplete Dropdown for Books -->
+                                    <div class="autocomplete-dropdown" id="book-autocomplete-dropdown"></div>
+                                </div>
+                                <!-- Inline Book Dossier / Empty State -->
+                                <div class="workflow-dossier-preview" id="item-dossier-panel">
+                                    <div class="dossier-empty">
+                                        <span class="empty-kicker">Book</span>
+                                        <div class="empty-title">No book selected</div>
+                                        <div class="empty-desc">Search by title or scan a barcode to view volume details.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Secondary Compact Scan & Presets Row -->
+                        <div class="workspace-aux-row">
+                            <div class="aux-scan-wrap">
+                                <span class="aux-label">Universal scan:</span>
+                                <div class="aux-input-wrap">
+                                    <svg class="aux-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <circle cx="11" cy="11" r="8"/>
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                    </svg>
+                                    <input type="text" class="aux-input" id="circulation-universal-scan" placeholder="Scan any barcode or student card..." autocomplete="off" />
+                                </div>
+                            </div>
+                            <div class="aux-presets">
+                                <span class="aux-label">Enrolled Students:</span>
+                                <button type="button" class="preset-pill" id="demo-load-aarav" title="Undergraduate CS student">Aarav Sharma (ATH-8031)</button>
+                                <button type="button" class="preset-pill" id="demo-load-sophia" title="Postgraduate Data Science">Sophia Chen (ATH-8032)</button>
+                                <button type="button" class="preset-pill" id="demo-load-patron" title="Senior Researcher">Eleanor Vance (ATH-8021)</button>
+                                <button type="button" class="preset-pill" id="demo-load-book">C Programming (LIB-00101)</button>
+                            </div>
+                        </div>
+
+                        <!-- Integrated Transaction Action Bar -->
+                        <div class="workspace-action-bar" id="circulation-transaction-bar">
+                            <div class="action-summary-left">
+                                <div class="summary-status-dot"></div>
+                                <div class="summary-status-text" id="circulation-transaction-summary-text">
+                                    Select an enrolled student and book to commence transaction.
+                                </div>
+                            </div>
+                            <div class="action-buttons-right">
+                                <button type="button" class="btn-editorial-ghost" id="btn-clear-dossiers">Reset</button>
+                                <button type="button" class="btn-editorial-secondary" id="btn-process-return" disabled style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                                    <span>Return with Slip</span>
+                                </button>
+                                <button type="button" class="btn-editorial-secondary" id="btn-preview-invoice" disabled style="display: inline-flex; align-items: center; gap: 6px;" title="Generate official loan invoice and downloadable PDF receipt">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                    <span>Invoice PDF</span>
+                                </button>
+                                <button type="button" class="btn-editorial-primary" id="btn-issue-loan" disabled>
+                                    <span>Issue Loan</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Compact Editorial Statistics Strip (NOT separate cards!) -->
+                    <div class="editorial-stats-strip">
+                        <div class="stat-editorial-col">
+                            <div class="stat-editorial-label">Active Loans</div>
+                            <div class="stat-editorial-value" id="stat-active-loans">0</div>
+                            <div class="stat-editorial-meta">Currently borrowed</div>
+                        </div>
+                        <div class="stat-editorial-divider"></div>
+                        <div class="stat-editorial-col">
+                            <div class="stat-editorial-label">Due Soon</div>
+                            <div class="stat-editorial-value" id="stat-due-soon">0</div>
+                            <div class="stat-editorial-meta">Next 7 days</div>
+                        </div>
+                        <div class="stat-editorial-divider"></div>
+                        <div class="stat-editorial-col">
+                            <div class="stat-editorial-label">Overdue</div>
+                            <div class="stat-editorial-value stat-val-danger" id="stat-overdue-loans">0</div>
+                            <div class="stat-editorial-meta">Needs action</div>
+                        </div>
+                        <div class="stat-editorial-divider"></div>
+                        <div class="stat-editorial-col">
+                            <div class="stat-editorial-label">Returned</div>
+                            <div class="stat-editorial-value" id="stat-returned-loans">0</div>
+                            <div class="stat-editorial-meta">Today</div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Active Circulations Ledger (Right in the initial viewport!) -->
+                    <section class="editorial-ledger-section">
+                        <div class="ledger-top-bar">
+                            <div>
+                                <h2 class="ledger-main-title">Active Circulations</h2>
+                                <p class="ledger-main-sub">Current loans and recent circulation activity</p>
+                            </div>
+                            <div class="segmented-control">
+                                <button type="button" class="segment-btn loan-filter-btn active" data-filter="all">All</button>
+                                <button type="button" class="segment-btn loan-filter-btn" data-filter="active">Active</button>
+                                <button type="button" class="segment-btn loan-filter-btn" data-filter="overdue">Overdue</button>
+                            </div>
+                        </div>
+
+                        <div class="ledger-table-wrap">
+                            <table class="editorial-table">
+                                <thead>
+                                    <tr>
+                                        <th>Book</th>
+                                        <th>Borrower</th>
+                                        <th>Status</th>
+                                        <th>Due</th>
+                                        <th>Renewals</th>
+                                        <th>Charges / Fine</th>
+                                        <th style="text-align: right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="circulation-loans-tbody">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 VIEW 2: BIBLIOGRAPHIC CATALOG
+                 ============================================================ -->
+            <section class="view-content" id="view-catalog">
+                <!-- National Digital Library Archival Hero Banner -->
+                <div class="national-library-hero">
+                    <div class="hero-inner">
+                        <div class="hero-text-col">
+                            <div class="hero-badge">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                <span>National Archival & Digital Knowledge Repository</span>
+                            </div>
+                            <h2 class="hero-headline">Institutional Digital Library & Classical Repository</h2>
+                            <p class="hero-description">
+                                A curated national repository of computing foundations, mathematics, scientific treatises, and world literature. 
+                                Cataloged under Dewey Decimal Classification, high-density ISBN auto-discovery, and live dual-tier circulation.
+                            </p>
+                            <div class="hero-metrics-strip">
+                                <div class="hero-metric-chip">
+                                    <span class="metric-num" id="hero-stat-titles">7+</span>
+                                    <span class="metric-label">Master Titles</span>
+                                </div>
+                                <div class="hero-metric-chip">
+                                    <span class="metric-num" id="hero-stat-holdings">27</span>
+                                    <span class="metric-label">Physical Volumes</span>
+                                </div>
+                                <div class="hero-metric-chip">
+                                    <span class="metric-num">0s</span>
+                                    <span class="metric-label">Scan Latency</span>
+                                </div>
+                                <div class="hero-metric-chip">
+                                    <span class="metric-num" style="color: var(--status-success-text);">Active</span>
+                                    <span class="metric-label">Archival DB</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hero-cta-col">
+                            <div class="hero-quick-card">
+                                <div class="quick-card-title">Quick Actions</div>
+                                <div class="quick-card-actions">
+                                    <button class="hero-action-btn" id="hero-btn-catalog-title">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                        <span>Catalog New Title</span>
+                                    </button>
+                                    <button class="hero-action-btn" id="hero-btn-circulation-desk">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="6" y1="8" x2="6" y2="16"/><line x1="10" y1="8" x2="10" y2="16"/></svg>
+                                        <span>Circulation Desk</span>
+                                    </button>
+                                    <button class="hero-action-btn" id="hero-btn-command-palette">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                        <span>Search (Ctrl+K)</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="catalog-toolbar">
+                    <div class="catalog-search-wrap">
+                        <input type="text" class="form-input" id="catalog-search-input" placeholder="Search catalog by title, author, ISBN..." style="width: 100%;" />
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="display: flex; border: 1px solid var(--border-subtle); border-radius: 4px; overflow: hidden;">
+                            <button class="btn-icon active" id="view-toggle-grid" title="Grid View" style="border: none; border-radius: 0;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            </button>
+                            <button class="btn-icon" id="view-toggle-table" title="Table View" style="border: none; border-radius: 0;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                            </button>
+                        </div>
+
+                        <button class="btn-primary" id="btn-open-add-book-modal">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            <span>Catalog New Title</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dewey Filter Horizontal Scroll -->
+                <div class="dewey-filter-scroll" style="margin-bottom: 20px;">
+                    <div class="dewey-pill active" data-dewey="">All Disciplines</div>
+                    <div class="dewey-pill" data-dewey="000">000 Computer Science & Info</div>
+                    <div class="dewey-pill" data-dewey="100">100 Philosophy & Psychology</div>
+                    <div class="dewey-pill" data-dewey="200">200 Religion</div>
+                    <div class="dewey-pill" data-dewey="300">300 Social Sciences & Law</div>
+                    <div class="dewey-pill" data-dewey="500">500 Natural Sciences & Math</div>
+                    <div class="dewey-pill" data-dewey="600">600 Technology & Engineering</div>
+                    <div class="dewey-pill" data-dewey="800">800 Literature & Rhetoric</div>
+                    <div class="dewey-pill" data-dewey="900">900 History & Geography</div>
+                </div>
+
+                <!-- Books Grid -->
+                <div class="book-grid" id="catalog-book-grid">
+                    <!-- Dynamic cards -->
+                </div>
+
+                <!-- Books Table (Hidden by default) -->
+                <div class="table-container" id="catalog-book-table-wrap" style="display: none;">
+                    <table class="archival-table">
+                        <thead>
+                            <tr>
+                                <th>Call No</th>
+                                <th>Title</th>
+                                <th>Author(s)</th>
+                                <th>ISBN-13</th>
+                                <th>Category</th>
+                                <th style="text-align: right;">Availability</th>
+                            </tr>
+                        </thead>
+                        <tbody id="catalog-book-tbody">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 VIEW 3: PATRON REGISTRY
+                 ============================================================ -->
+            <section class="view-content" id="view-patrons">
+                <div class="catalog-toolbar">
+                    <div class="catalog-search-wrap">
+                        <input type="text" class="form-input" id="patron-search-input" placeholder="Search scholars by name, membership ID, email..." style="width: 100%;" />
+                    </div>
+                    <button class="btn-primary" id="btn-open-add-patron-modal">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span>Enroll Scholar / Patron</span>
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table class="archival-table">
+                        <thead>
+                            <tr>
+                                <th>Membership ID</th>
+                                <th>Full Name</th>
+                                <th>Tier</th>
+                                <th>Email</th>
+                                <th>Active Quota</th>
+                                <th>Fines</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patron-table-tbody">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 VIEW 4: FINANCIAL ASSESSMENTS & FINES
+                 ============================================================ -->
+            <section class="view-content" id="view-fines">
+                <div class="catalog-toolbar">
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-secondary fine-filter-btn active" data-filter="outstanding">Outstanding Dues</button>
+                        <button class="btn-secondary fine-filter-btn" data-filter="settled">Settled Ledgers</button>
+                        <button class="btn-secondary fine-filter-btn" data-filter="all">All Assessments</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="archival-table">
+                        <thead>
+                            <tr>
+                                <th>Patron ID</th>
+                                <th>Borrower</th>
+                                <th>Title Assessed</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Assessed Date</th>
+                                <th style="text-align: right;">Resolution</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fines-table-tbody">
+                            <!-- Dynamic rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ============================================================
+                 VIEW 5: INSTITUTIONAL TELEMETRY & KPIS
+                 ============================================================ -->
+            <section class="view-content" id="view-telemetry">
+                <!-- KPI Matrices -->
+                <div class="telemetry-grid">
+                    <div class="telemetry-card">
+                        <span class="telemetry-label">Cataloged Titles</span>
+                        <span class="telemetry-value" id="telemetry-titles">0</span>
+                    </div>
+                    <div class="telemetry-card">
+                        <span class="telemetry-label">Total Physical Holdings</span>
+                        <span class="telemetry-value" id="telemetry-holdings">0</span>
+                    </div>
+                    <div class="telemetry-card">
+                        <span class="telemetry-label">Available on Shelf</span>
+                        <span class="telemetry-value accent-gold" id="telemetry-available">0</span>
+                    </div>
+                    <div class="telemetry-card">
+                        <span class="telemetry-label">Active Circulations</span>
+                        <span class="telemetry-value" id="telemetry-active-loans">0</span>
+                    </div>
+                    <div class="telemetry-card">
+                        <span class="telemetry-label">Overdue Loans</span>
+                        <span class="telemetry-value accent-red" id="telemetry-overdue-loans">0</span>
+                    </div>
+                    <div class="telemetry-card">
+                        <span class="telemetry-label">Enrolled Scholars</span>
+                        <span class="telemetry-value" id="telemetry-patrons">0</span>
+                    </div>
+                    <div class="telemetry-card">
+                        <span class="telemetry-label">Outstanding Fines</span>
+                        <span class="telemetry-value accent-red" id="telemetry-fines-outstanding">$0.00</span>
+                    </div>
+                    <div class="telemetry-card">
+                        <span class="telemetry-label">Collected Fines</span>
+                        <span class="telemetry-value accent-gold" id="telemetry-fines-collected">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Charts & Activity Trail Split -->
+                <div class="telemetry-charts-split">
+                    <!-- Dewey Distribution -->
+                    <div class="archival-card">
+                        <div class="card-title">Holdings Distribution by Dewey Classification</div>
+                        <div class="dewey-bars-list" id="telemetry-dewey-bars">
+                            <!-- Dynamic distribution bars -->
+                        </div>
+                    </div>
+
+                    <!-- Operational Activity Trail -->
+                    <div class="archival-card">
+                        <div class="card-title">Institutional Activity & Audit Trail</div>
+                        <div id="telemetry-activity-list" style="display: flex; flex-direction: column;">
+                            <!-- Dynamic logs -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ============================================================
+         MODALS & OVERLAYS
+         ============================================================ -->
+
+    <!-- MODAL 0: AUTHENTICATION & GMAIL OTP -->
+    <div class="modal-backdrop" id="auth-modal">
+        <div class="modal-card" style="max-width: 520px;">
+            <div class="modal-header" style="padding: 16px 20px;">
+                <h3 class="modal-title" style="font-size: 16px;">Institutional Authentication</h3>
+                <button class="btn-icon" data-modal-close>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            
+            <div class="auth-tabs-header">
+                <button type="button" class="auth-tab-btn active" id="auth-tab-login">Sign In</button>
+                <button type="button" class="auth-tab-btn" id="auth-tab-signup">Create Account</button>
+            </div>
+
+            <!-- SECTION 1: SIGN IN -->
+            <div id="auth-section-login" style="padding: 24px;">
+                <form id="form-auth-login">
+                    <div class="form-group">
+                        <label class="form-label" for="login-email">Gmail / Institutional Email</label>
+                        <input type="email" class="form-input" id="login-email" placeholder="scholar@sonam.edu" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="login-password">Password</label>
+                        <input type="password" class="form-input" id="login-password" placeholder="••••••••" required />
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 10px; margin-top: 8px;">
+                        Sign In to Library Desk
+                    </button>
+                </form>
+
+                <!-- Quick Demo Login Presets -->
+                <div class="demo-accounts-box">
+                    <div class="demo-box-header">
+                        <span>Quick Demo Logins</span>
+                        <span style="color: var(--accent-gold);">1-Click Access</span>
+                    </div>
+                    <div class="demo-buttons-row">
+                        <button type="button" class="btn-demo-quick" id="btn-demo-admin-login">
+                            <span class="demo-role-name">Administrator</span>
+                            <span class="demo-role-email">admin@sonam.edu</span>
+                        </button>
+                        <button type="button" class="btn-demo-quick" id="btn-demo-patron-login">
+                            <span class="demo-role-name">Scholar / Patron</span>
+                            <span class="demo-role-email">patron@sonam.edu</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 18px; font-size: 12px; color: var(--text-muted);">
+                    New scholar or staff member? <a href="#" id="link-switch-to-signup" class="btn-link">Create an Account</a>
+                </div>
+            </div>
+
+            <!-- SECTION 2: CREATE ACCOUNT -->
+            <div id="auth-section-signup" style="padding: 24px; display: none;">
+                <form id="form-auth-signup">
+                    <div class="form-group">
+                        <label class="form-label" for="signup-name">Full Legal Name</label>
+                        <input type="text" class="form-input" id="signup-name" placeholder="Dr. Eleanor Vance" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="signup-email">Gmail Address (for OTP Delivery)</label>
+                        <input type="email" class="form-input" id="signup-email" placeholder="your.name@gmail.com" required />
+                        <span style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">A 6-digit OTP will be dispatched to this inbox for verification.</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label class="form-label" for="signup-role">Institutional Role</label>
+                            <select class="form-select" id="signup-role">
+                                <option value="patron">Scholar / Patron</option>
+                                <option value="admin">Administrator / Librarian</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="signup-phone">Phone Number (Optional)</label>
+                            <input type="text" class="form-input" id="signup-phone" placeholder="+1 555 0192" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="signup-password">Secure Password</label>
+                        <input type="password" class="form-input" id="signup-password" placeholder="Create robust password" required />
+                        
+                        <!-- Real-time Criteria Checklist -->
+                        <div class="password-criteria-box">
+                            <div class="criteria-title">Password Security Requirements</div>
+                            <div class="criteria-list">
+                                <div class="criteria-item" id="pwd-rule-len">
+                                    <div class="criteria-dot"></div>
+                                    <span>At least 8 characters (up to 64)</span>
+                                </div>
+                                <div class="criteria-item" id="pwd-rule-upper">
+                                    <div class="criteria-dot"></div>
+                                    <span>At least one uppercase letter (A-Z)</span>
+                                </div>
+                                <div class="criteria-item" id="pwd-rule-lower">
+                                    <div class="criteria-dot"></div>
+                                    <span>At least one lowercase letter (a-z)</span>
+                                </div>
+                                <div class="criteria-item" id="pwd-rule-num">
+                                    <div class="criteria-dot"></div>
+                                    <span>At least one numerical digit (0-9)</span>
+                                </div>
+                                <div class="criteria-item" id="pwd-rule-sym">
+                                    <div class="criteria-dot"></div>
+                                    <span>At least one special symbol (!@#$%^&*...)</span>
+                                </div>
+                            </div>
+                            <div class="password-strength-container">
+                                <div class="password-strength-track">
+                                    <div class="password-strength-fill" id="password-strength-fill"></div>
+                                </div>
+                                <div class="password-strength-text" id="password-strength-text">Enter password</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="signup-confirm-password">Confirm Password</label>
+                        <input type="password" class="form-input" id="signup-confirm-password" placeholder="Repeat password" required />
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="btn-submit-signup" style="width: 100%; justify-content: center; padding: 10px;">
+                        Send Verification Code to Gmail
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 18px; font-size: 12px; color: var(--text-muted);">
+                    Already registered? <a href="#" id="link-switch-to-login" class="btn-link">Sign In</a>
+                </div>
+            </div>
+
+            <!-- SECTION 3: 6-DIGIT OTP VERIFICATION -->
+            <div id="auth-section-otp" style="padding: 24px; display: none;">
+                <div class="otp-screen-wrap">
+                    <h4 style="font-size: 16px; margin-bottom: 8px;">Check Your Gmail Inbox</h4>
+                    <div class="otp-target-notice">
+                        We dispatched a 6-digit verification code to:<br>
+                        <strong style="color: var(--accent-gold-light);" id="otp-target-email"></strong>
+                    </div>
+
+                    <div class="otp-dev-preview-box" id="otp-dev-preview-box">
+                        <!-- Populated if Gmail SMTP offline or simulating -->
+                    </div>
+
+                    <form id="form-auth-otp">
+                        <div class="form-group">
+                            <label class="form-label" for="auth-otp-input">6-Digit Verification Code</label>
+                            <input type="text" class="form-input otp-input-field" id="auth-otp-input" maxlength="6" placeholder="000000" autocomplete="one-time-code" required />
+                        </div>
+
+                        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 10px;">
+                            Verify & Activate Account
+                        </button>
+                    </form>
+
+                    <div class="resend-row">
+                        <span>Didn't receive the email?</span>
+                        <button type="button" class="btn-link" id="btn-resend-otp">
+                            Resend Code <span id="resend-timer-text"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: CATALOG NEW TITLE -->
+    <div class="modal-backdrop" id="add-book-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Catalog New Bibliographic Title</h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" class="btn-secondary" id="btn-prefill-sample-book" style="padding: 4px 10px; font-size: 11px;">Pre-fill Demo Book</button>
+                    <button type="button" class="btn-secondary" id="btn-auto-gen-isbn" style="padding: 4px 10px; font-size: 11px;">Auto-Generate ISBN</button>
+                    <button class="btn-icon" data-modal-close>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+            </div>
+            <form id="form-add-book">
+                <div class="modal-body">
+                    <div style="background: var(--bg-surface-raised); padding: 14px; border: 1px solid var(--accent-gold-border); border-radius: 4px; margin-bottom: 20px;">
+                        <label class="form-label">Instant Bibliographic Lookup (Open Library / Google Books)</label>
+                        <div style="display: flex; gap: 8px; margin-top: 6px;">
+                            <input type="text" class="form-input" id="book-input-isbn" placeholder="ISBN-13 (Optional — Leave blank to auto-generate)" style="flex: 1; font-family: var(--font-mono);" />
+                            <button type="button" class="btn-secondary" id="btn-fetch-isbn-meta">
+                                Auto-Fetch Metadata
+                            </button>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Fetches title, authors, publisher, year, abstract, and cover artwork automatically.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="book-input-title">Work Title *</label>
+                        <input type="text" class="form-input" id="book-input-title" placeholder="e.g. Structure and Interpretation of Computer Programs" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="book-input-subtitle">Subtitle (Optional)</label>
+                        <input type="text" class="form-input" id="book-input-subtitle" placeholder="e.g. Second Edition" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="book-input-authors">Author(s) (Comma separated)</label>
+                        <input type="text" class="form-input" id="book-input-authors" placeholder="e.g. Harold Abelson, Gerald Jay Sussman" />
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label class="form-label" for="book-input-publisher">Publisher</label>
+                            <input type="text" class="form-input" id="book-input-publisher" placeholder="e.g. MIT Press" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="book-input-year">Publication Year</label>
+                            <input type="number" class="form-input" id="book-input-year" placeholder="YYYY" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="book-input-dewey">Dewey Call No</label>
+                            <input type="text" class="form-input" id="book-input-dewey" placeholder="005.133" style="font-family: var(--font-mono);" />
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label class="form-label" for="book-input-copies">Initial Copies</label>
+                            <input type="number" class="form-input" id="book-input-copies" value="2" min="1" max="50" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="book-input-floor">Location Floor</label>
+                            <input type="text" class="form-input" id="book-input-floor" value="Floor 2" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="book-input-shelf">Shelf Tag</label>
+                            <input type="text" class="form-input" id="book-input-shelf" value="Shelf CS-01" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="book-input-cover">Cover Image URL (Optional)</label>
+                        <input type="url" class="form-input" id="book-input-cover" placeholder="https://..." />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="book-input-summary">Bibliographic Abstract</label>
+                        <textarea class="form-textarea" id="book-input-summary" placeholder="Summary or description of the volume..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn-primary" id="btn-submit-catalog-book">Complete Cataloging</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: BOOK DETAILS & COPIES INSPECTOR -->
+    <div class="modal-backdrop" id="book-detail-modal">
+        <div class="modal-card" style="max-width: 720px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Bibliographic Record & Inventory</h3>
+                <button class="btn-icon" data-modal-close>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="book-detail-content">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" data-modal-close>Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: ENROLL SCHOLAR / PATRON -->
+    <div class="modal-backdrop" id="add-patron-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Enroll Scholar / Patron</h3>
+                <button class="btn-icon" data-modal-close>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="form-add-patron">
+                <div class="modal-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label class="form-label" for="patron-input-first">First Name</label>
+                            <input type="text" class="form-input" id="patron-input-first" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="patron-input-last">Last Name</label>
+                            <input type="text" class="form-input" id="patron-input-last" required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="patron-input-email">Institutional Email</label>
+                        <input type="email" class="form-input" id="patron-input-email" required />
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label class="form-label" for="patron-input-phone">Phone Number (Optional)</label>
+                            <input type="text" class="form-input" id="patron-input-phone" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="patron-input-tier">Patron Tier</label>
+                            <select class="form-select" id="patron-input-tier">
+                                <option value="undergraduate">Undergraduate (Limit 5)</option>
+                                <option value="postgraduate">Postgraduate (Limit 8)</option>
+                                <option value="faculty">Faculty Member (Limit 15)</option>
+                                <option value="researcher">Fellow / Researcher (Limit 12)</option>
+                                <option value="general">General Public (Limit 3)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="patron-input-membership">Custom Card Number (Optional)</label>
+                        <input type="text" class="form-input" id="patron-input-membership" placeholder="Leave empty for auto-generated ATH-XXXX" style="font-family: var(--font-mono);" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn-primary">Enroll Patron</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: SETTLE FINE -->
+    <div class="modal-backdrop" id="settle-fine-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Record Fine Settlement</h3>
+                <button class="btn-icon" data-modal-close>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="form-settle-fine">
+                <div class="modal-body">
+                    <div id="settle-fine-details" style="font-size: 13px; color: var(--text-secondary); background: var(--bg-surface-raised); padding: 12px; border-radius: 4px; border: 1px solid var(--border-subtle); margin-bottom: 16px;"></div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label class="form-label" for="settle-fine-amount">Payment Amount ($)</label>
+                            <input type="number" step="0.01" class="form-input" id="settle-fine-amount" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="settle-fine-method">Payment Method</label>
+                            <select class="form-select" id="settle-fine-method">
+                                <option value="Cash">Cash Receipt</option>
+                                <option value="Electronic Card">Institutional Card / Terminal</option>
+                                <option value="Department Ledger">Department Grant Ledger</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn-primary">Confirm Receipt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: WAIVE FINE -->
+    <div class="modal-backdrop" id="waive-fine-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Authorize Fine Waiver</h3>
+                <button class="btn-icon" data-modal-close>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="form-waive-fine">
+                <div class="modal-body">
+                    <div id="waive-fine-details" style="font-size: 13px; color: var(--text-secondary); background: var(--bg-surface-raised); padding: 12px; border-radius: 4px; border: 1px solid var(--border-subtle); margin-bottom: 16px;"></div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="waive-fine-authorized">Authorizing Librarian / Officer</label>
+                        <input type="text" class="form-input" id="waive-fine-authorized" placeholder="e.g. Chief Librarian Davies" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="waive-fine-reason">Justification & Regulatory Reason</label>
+                        <textarea class="form-textarea" id="waive-fine-reason" placeholder="Document regulatory exception, medical exemption, or institutional grant authorization..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn-primary">Execute Waiver</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 6: FIREBASE CLOUD CONNECTION -->
+    <div class="modal-backdrop" id="firebase-connection-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">Firebase Cloud Integration</h3>
+                <button class="btn-icon" data-modal-close>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="form-connect-firebase">
+                <div class="modal-body">
+                    <div id="firebase-status-details" style="background: var(--bg-surface-raised); padding: 14px; border-radius: 4px; border: 1px solid var(--border-subtle); margin-bottom: 16px;">
+                        <!-- Dynamically populated -->
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="firebase-key-file">Upload serviceAccountKey.json</label>
+                        <input type="file" class="form-input" id="firebase-key-file" accept=".json" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="firebase-json-textarea">Or Paste Service Account Credentials JSON</label>
+                        <textarea class="form-textarea" id="firebase-json-textarea" placeholder='{"type": "service_account", "project_id": "...", ...}' style="font-family: var(--font-mono); font-size: 11px; min-height: 140px;"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn-primary" id="btn-connect-firebase-submit">Authenticate & Connect</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 7: PROCESS RETURN & CONDITION INSPECTION -->
+    <div class="modal-backdrop" id="return-book-modal">
+        <div class="modal-card" style="max-width: 620px;">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 28px; height: 28px; border-radius: 6px; background: rgba(217, 119, 6, 0.15); color: var(--accent-gold); display: flex; align-items: center; justify-content: center;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                    </div>
+                    <h3 class="modal-title">Book Return & Condition Inspection</h3>
+                </div>
+                <button class="btn-icon" data-modal-close>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="form-return-inspection">
+                <div class="modal-body">
+                    <!-- Book & Student Summary Box -->
+                    <div id="return-modal-summary" style="background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 14px; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <div id="return-modal-book-title" style="font-weight: 700; font-size: 15px; color: var(--text-primary);">The C Programming Language</div>
+                                <div id="return-modal-book-sub" style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px;">Barcode: LIB-00101 · ISBN: 9780131103627</div>
+                            </div>
+                            <span class="badge-soft badge-soft-active" id="return-modal-status-badge">Loan Active</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border-subtle); font-size: 12px;">
+                            <div><span style="color: var(--text-muted);">Borrower:</span> <strong id="return-modal-patron-name" style="color: var(--text-primary);">Aarav Sharma</strong> (<span id="return-modal-patron-id">ATH-8031</span>)</div>
+                            <div><span style="color: var(--text-muted);">Due Date:</span> <strong id="return-modal-due-date" style="color: var(--text-primary);">Oct 23, 2026</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Physical Condition Selector -->
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; justify-content: space-between;">
+                            <span>Evaluated Physical Condition</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Select physical state upon return</span>
+                        </label>
+                        <div class="condition-picker-grid" id="return-condition-picker">
+                            <div class="condition-picker-item selected" data-condition="good" data-fee="0">
+                                <span class="condition-picker-name">Pristine / Good</span>
+                                <span class="condition-picker-fee">$0.00 fee</span>
+                            </div>
+                            <div class="condition-picker-item" data-condition="fair" data-fee="2.00">
+                                <span class="condition-picker-name">Minor Wear</span>
+                                <span class="condition-picker-fee">+$2.00 charge</span>
+                            </div>
+                            <div class="condition-picker-item" data-condition="torn_pages" data-fee="8.00">
+                                <span class="condition-picker-name">Torn Cover/Pages</span>
+                                <span class="condition-picker-fee">+$8.00 charge</span>
+                            </div>
+                            <div class="condition-picker-item" data-condition="liquid_damage" data-fee="15.00">
+                                <span class="condition-picker-name">Water/Liquid Stain</span>
+                                <span class="condition-picker-fee">+$15.00 charge</span>
+                            </div>
+                            <div class="condition-picker-item" data-condition="broken_spine" data-fee="20.00">
+                                <span class="condition-picker-name">Broken Binding</span>
+                                <span class="condition-picker-fee">+$20.00 charge</span>
+                            </div>
+                            <div class="condition-picker-item" data-condition="severe_damage" data-fee="40.00">
+                                <span class="condition-picker-name">Severe / Replace</span>
+                                <span class="condition-picker-fee">+$40.00 replace</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Assessment Breakdown -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px;">
+                        <div class="form-group">
+                            <label class="form-label" for="return-input-damage-fee">Damage / Repair Fee ($)</label>
+                            <input type="number" step="0.50" min="0" class="form-input" id="return-input-damage-fee" value="0.00" style="font-family: var(--font-mono); font-weight: 600;" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="return-input-overdue-fee">Overdue Fine ($)</label>
+                            <input type="number" step="0.50" min="0" class="form-input" id="return-input-overdue-fee" value="0.00" readonly style="font-family: var(--font-mono); background: var(--bg-surface); opacity: 0.85;" />
+                        </div>
+                    </div>
+
+                    <!-- Inspection Notes -->
+                    <div class="form-group">
+                        <label class="form-label" for="return-input-notes">Inspector Condition Notes & Observations</label>
+                        <input type="text" class="form-input" id="return-input-notes" placeholder="e.g. Spine tight, clean margins, minor pencil note erased on p. 12" />
+                    </div>
+
+                    <!-- Payment Settlement Option -->
+                    <div class="form-group">
+                        <label class="form-label">Fee Settlement Action</label>
+                        <select class="form-select" id="return-select-payment-method">
+                            <option value="account_billed">Bill to Student Institutional Account (Outstanding Balance)</option>
+                            <option value="paid_on_spot">Immediate Settlement at Desk (Cash / Terminal Paid)</option>
+                            <option value="waived">Waive Fee Under Archival Discretion</option>
+                        </select>
+                    </div>
+
+                    <!-- Total Assessment Pill -->
+                    <div style="background: rgba(217, 119, 6, 0.08); border: 1px solid var(--accent-gold-border); border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <div>
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">Total Assessed Fees</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Overdue Fine + Physical Condition Penalty</div>
+                        </div>
+                        <div id="return-modal-total-display" style="font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--accent-gold);">$0.00</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn-primary" id="btn-submit-return-inspection" style="display: inline-flex; align-items: center; gap: 8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span>Check In & Generate Return Slip</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 8: ARCHIVAL RETURN SLIP VIEWER & PDF EXPORTER -->
+    <div class="modal-backdrop" id="return-slip-modal">
+        <div class="modal-card-doc">
+            <div class="modal-doc-toolbar">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 28px; height: 28px; border-radius: 6px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--text-primary);" id="slip-view-header-title">Archival Return Slip & Assessment</div>
+                        <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);" id="slip-view-header-number">RET-20261002-XXXX</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-secondary" id="btn-print-return-slip" style="padding: 6px 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        <span>Print</span>
+                    </button>
+                    <button type="button" class="btn-primary" id="btn-download-return-slip-pdf" style="padding: 6px 14px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span>Download PDF</span>
+                    </button>
+                    <button class="btn-icon" data-modal-close style="margin-left: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-doc-scroll" id="return-slip-scroll-wrap">
+                <!-- PRINTABLE ARCHIVAL SLIP CANVAS -->
+                <div class="official-document-sheet" id="return-slip-document-sheet">
+                    <div class="doc-watermark">SONAM ARCHIVES</div>
+                    
+                    <div class="doc-header-block">
+                        <div class="doc-brand-group">
+                            <div class="doc-crest-icon">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                                    <polyline points="2 17 12 22 22 17"/>
+                                    <polyline points="2 12 12 17 22 12"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 class="doc-institution-title">Sonam Institutional Library</h1>
+                                <div class="doc-institution-sub">Department of Archival Circulation & Curatorial Records</div>
+                            </div>
+                        </div>
+                        <div class="doc-meta-right">
+                            <div class="doc-doc-type-pill">Return Slip & Condition Deed</div>
+                            <div class="doc-number-text" id="slip-meta-id">RET-20261002-XXXX</div>
+                            <div class="doc-date-text" id="slip-meta-date">Oct 02, 2026 · 14:40 UTC</div>
+                        </div>
+                    </div>
+
+                    <!-- Condition Evaluation Highlight Banner -->
+                    <div class="doc-condition-banner condition-good" id="slip-condition-banner">
+                        <div>
+                            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; font-family: Arial, sans-serif; font-weight: 700;">Evaluated Condition on Return:</span>
+                            <div style="font-size: 16px; font-weight: 700; margin-top: 2px;" id="slip-condition-title">Pristine / Good Condition</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 11px; text-transform: uppercase; font-family: Arial, sans-serif;">Damage Surcharge:</span>
+                            <div style="font-size: 16px; font-weight: 700; font-family: 'Courier New', Courier, monospace;" id="slip-condition-fee">$0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Metadata Grid -->
+                    <div class="doc-section-grid">
+                        <div>
+                            <div class="doc-box-title">Borrower / Student Information</div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Student Name:</span>
+                                <span class="doc-field-v" id="slip-patron-name">Aarav Sharma</span>
+                            </div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Membership Card / ID:</span>
+                                <span class="doc-field-v" id="slip-patron-id">ATH-8031</span>
+                            </div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Institutional Status:</span>
+                                <span class="doc-field-v" id="slip-patron-status">Enrolled Student (Good Standing)</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="doc-box-title">Holding & Circulation Dossier</div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Volume Title:</span>
+                                <span class="doc-field-v" id="slip-book-title">The C Programming Language</span>
+                            </div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Copy Barcode:</span>
+                                <span class="doc-field-v" id="slip-barcode">LIB-00101</span>
+                            </div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Date Issued:</span>
+                                <span class="doc-field-v" id="slip-issued-at">Sep 30, 2026</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Assessment Table -->
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Assessment Item Description</th>
+                                <th style="text-align: center;">Rate / Schedule</th>
+                                <th style="text-align: center;">Units / Days</th>
+                                <th>Subtotal Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <strong>Overdue Circulation Fine</strong>
+                                    <div style="font-size: 11px; color: #64748b;" id="slip-overdue-desc">Assessed after standard 2-day grace period</div>
+                                </td>
+                                <td style="text-align: center; font-family: 'Courier New', Courier, monospace;">$0.50 / day</td>
+                                <td style="text-align: center; font-family: 'Courier New', Courier, monospace;" id="slip-overdue-days">0 days</td>
+                                <td id="slip-overdue-amt">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Physical Item Condition & Restoration Charge</strong>
+                                    <div style="font-size: 11px; color: #64748b;" id="slip-damage-desc">Archival restoration fee based on return state</div>
+                                </td>
+                                <td style="text-align: center; font-family: 'Courier New', Courier, monospace;">Tariff</td>
+                                <td style="text-align: center; font-family: 'Courier New', Courier, monospace;">1 copy</td>
+                                <td id="slip-damage-amt">$0.00</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3">Total Assessment Levied:</td>
+                                <td id="slip-total-amt">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="color: #64748b; font-size: 12.5px;">Payment Settlement Method & Status:</td>
+                                <td id="slip-payment-status" style="color: #166534; font-size: 12.5px;">Cleared — No Balance</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <!-- Inspector Observations -->
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px;">
+                        <span style="font-size: 11px; text-transform: uppercase; font-family: Arial, sans-serif; font-weight: 700; color: #475569;">Librarian Inspection Remarks:</span>
+                        <div id="slip-remarks" style="font-size: 12.5px; color: #1e293b; margin-top: 4px; font-style: italic;">
+                            "Item returned and verified against catalog barcode ledger. Copy restored to active circulating stack."
+                        </div>
+                    </div>
+
+                    <!-- Signatures & Official Stamp -->
+                    <div class="doc-sign-strip">
+                        <div class="doc-sign-col">
+                            <div class="doc-sign-line"></div>
+                            <span class="doc-sign-label">Borrower / Student</span>
+                        </div>
+                        <div class="doc-stamp-circle">
+                            <span>SONAM LMS</span>
+                            <span style="font-size: 7px; margin: 2px 0;">ARCHIVES REGISTRY</span>
+                            <span>OFFICIAL</span>
+                        </div>
+                        <div class="doc-sign-col">
+                            <div class="doc-sign-line"></div>
+                            <span class="doc-sign-label">Archivist & Desk Curator</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 9: LOAN ISSUE INVOICE & PDF EXPORT -->
+    <div class="modal-backdrop" id="loan-invoice-modal">
+        <div class="modal-card-doc">
+            <div class="modal-doc-toolbar">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 28px; height: 28px; border-radius: 6px; background: rgba(217, 119, 6, 0.15); color: var(--accent-gold); display: flex; align-items: center; justify-content: center;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; font-size: 14px; color: var(--text-primary);">Circulation Invoice & Borrowing Agreement</div>
+                        <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);" id="inv-view-header-number">INV-20261002-XXXX</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-secondary" id="btn-print-invoice" style="padding: 6px 12px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        <span>Print</span>
+                    </button>
+                    <button type="button" class="btn-primary" id="btn-download-invoice-pdf" style="padding: 6px 14px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span>Download PDF</span>
+                    </button>
+                    <button class="btn-icon" data-modal-close style="margin-left: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-doc-scroll" id="invoice-scroll-wrap">
+                <!-- PRINTABLE ARCHIVAL INVOICE SHEET -->
+                <div class="official-document-sheet" id="invoice-document-sheet">
+                    <div class="doc-watermark">SONAM ARCHIVES</div>
+                    
+                    <div class="doc-header-block">
+                        <div class="doc-brand-group">
+                            <div class="doc-crest-icon">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                                    <polyline points="2 17 12 22 22 17"/>
+                                    <polyline points="2 12 12 17 22 12"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 class="doc-institution-title">Sonam Institutional Library</h1>
+                                <div class="doc-institution-sub">Institutional Circulation Ledger & Borrowing Deed</div>
+                            </div>
+                        </div>
+                        <div class="doc-meta-right">
+                            <div class="doc-doc-type-pill">Issue Invoice & Agreement</div>
+                            <div class="doc-number-text" id="inv-meta-id">INV-20261002-XXXX</div>
+                            <div class="doc-date-text" id="inv-meta-date">Oct 02, 2026 · 14:40 UTC</div>
+                        </div>
+                    </div>
+
+                    <!-- Metadata Grid -->
+                    <div class="doc-section-grid">
+                        <div>
+                            <div class="doc-box-title">Borrower / Student Profile</div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Student Name:</span>
+                                <span class="doc-field-v" id="inv-patron-name">Aarav Sharma</span>
+                            </div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Student ID / Card:</span>
+                                <span class="doc-field-v" id="inv-patron-id">ATH-8031</span>
+                            </div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Academic Tier:</span>
+                                <span class="doc-field-v" id="inv-patron-tier">Undergraduate (Quota: 5)</span>
+                            </div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Campus Email:</span>
+                                <span class="doc-field-v" id="inv-patron-email">aarav.sharma@archival.edu</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="doc-box-title">Bibliographic Asset & Loan Period</div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Volume Title:</span>
+                                <span class="doc-field-v" id="inv-book-title">The C Programming Language</span>
+                            </div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Barcode / Copy ID:</span>
+                                <span class="doc-field-v" id="inv-barcode">LIB-00101</span>
+                            </div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Location / Shelf:</span>
+                                <span class="doc-field-v" id="inv-location">Floor 2, Shelf CS-01</span>
+                            </div>
+                            <div class="doc-field-row">
+                                <span class="doc-field-k">Mandatory Due Date:</span>
+                                <span class="doc-field-v" id="inv-due-date" style="color: #b45309; font-weight: 700;">Nov 13, 2026</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Itemized Table -->
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Line Item & Description</th>
+                                <th style="text-align: center;">Rate Assessment</th>
+                                <th style="text-align: center;">Tariff Classification</th>
+                                <th style="text-align: right;">Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <strong>Volume Circulation Access Tariff</strong>
+                                    <div style="font-size: 11px; color: #64748b;">Standard archival lending fee (<span id="inv-period-days">21 days</span>)</div>
+                                </td>
+                                <td style="text-align: center; font-family: 'Courier New', Courier, monospace;" id="inv-fee-tariff-base">$15.00</td>
+                                <td style="text-align: center; color: #0284c7; font-weight: 600;" id="inv-fee-access-desc">Standard Archival Lending Tariff</td>
+                                <td style="text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 600;" id="inv-fee-access-amt">$15.00</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Curatorial Archival Holding Deposit</strong>
+                                    <div style="font-size: 11px; color: #64748b;">Physical asset security replacement bond</div>
+                                </td>
+                                <td style="text-align: center; font-family: 'Courier New', Courier, monospace;" id="inv-fee-deposit-base">$50.00</td>
+                                <td style="text-align: center; color: #0284c7; font-weight: 600;" id="inv-fee-deposit-desc">Asset Security Holding Bond</td>
+                                <td style="text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 600;" id="inv-fee-deposit-amt">$50.00</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Overdue Tariff Schedule Policy</strong>
+                                    <div style="font-size: 11px; color: #64748b;">Assessment begins after statutory 2-day grace period</div>
+                                </td>
+                                <td style="text-align: center; font-family: 'Courier New', Courier, monospace; color: #b45309;" id="inv-fee-daily-rate">$0.50 / day</td>
+                                <td style="text-align: center; color: #64748b; font-size: 11px;">Active Term Standing</td>
+                                <td style="text-align: right; font-family: 'Courier New', Courier, monospace;">$0.00</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Borrower Account Current Balance</strong>
+                                    <div style="font-size: 11px; color: #64748b;">Prior outstanding fines / fees on scholar card</div>
+                                </td>
+                                <td style="text-align: center; font-family: 'Courier New', Courier, monospace;" id="inv-patron-balance-base">$0.00</td>
+                                <td style="text-align: center; font-weight: 600;" id="inv-patron-balance-desc">Good Standing (Zero Arrears)</td>
+                                <td style="text-align: right; font-family: 'Courier New', Courier, monospace;" id="inv-patron-balance-amt">$0.00</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="border-top: 2px solid #cbd5e1; background: #f8fafc;">
+                                <td colspan="2"><strong>Gross Institutional Valuation:</strong></td>
+                                <td style="text-align: center; font-family: 'Courier New', Courier, monospace; font-weight: 700; color: #1e293b;" id="inv-gross-val">$65.00</td>
+                                <td style="text-align: right; font-family: 'Courier New', Courier, monospace; font-weight: 700; color: #166534;">Assessed</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"><strong>Total Circulation Charges Due / Assessed:</strong></td>
+                                <td id="inv-total-amt" style="text-align: right; font-size: 15px; font-weight: 700; color: #0f172a;">$65.00</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="color: #64748b; font-size: 12px;">Settlement Action & Status:</td>
+                                <td id="inv-payment-status" style="text-align: right; color: #166534; font-size: 12px; font-weight: 600;">Billed to Scholar Account Ledger ($65.00)</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <!-- Borrowing Agreement Terms -->
+                    <div class="doc-terms-block">
+                        <strong>Terms of Archival Custody:</strong>
+                        The borrower acknowledges receipt of the aforementioned volume in Good condition and undertakes to safeguard it against liquid spillages, pencil markings, torn pages, or spine deterioration. 
+                        A standard daily fine rate of <strong>$0.50 per day</strong> applies following an initial 2-day grace period. Overdue or damaged holdings will be assessed upon check-in and recorded on the official Return Slip.
+                    </div>
+
+                    <!-- Signatures & Stamp -->
+                    <div class="doc-sign-strip">
+                        <div class="doc-sign-col">
+                            <div class="doc-sign-line"></div>
+                            <span class="doc-sign-label">Student Recipient Signature</span>
+                        </div>
+                        <div class="doc-stamp-circle">
+                            <span>SONAM LMS</span>
+                            <span style="font-size: 7px; margin: 2px 0;">ISSUED & VERIFIED</span>
+                            <span>OFFICIAL</span>
+                        </div>
+                        <div class="doc-sign-col">
+                            <div class="doc-sign-line"></div>
+                            <span class="doc-sign-label">Authorizing Archivist</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMMAND PALETTE OVERLAY (Ctrl+K) -->
+    <div class="palette-backdrop" id="command-palette-backdrop">
+        <div class="palette-box">
+            <div class="palette-search-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="color: var(--accent-gold);">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" class="palette-input" id="palette-search-input" placeholder="Type a title, author, barcode, or command..." autocomplete="off" />
+                <span class="kbd-shortcut">Esc</span>
+            </div>
+            <div class="palette-results" id="palette-results-list">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="palette-footer">
+                <span>Use <span class="kbd-shortcut">&uarr;</span> <span class="kbd-shortcut">&darr;</span> to navigate</span>
+                <span>Press <span class="kbd-shortcut">&crarr;</span> to select</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATIONS CONTAINER -->
+    <div class="toast-container" id="app-toast-container"></div>
+
+    <!-- PDF EXPORT ENGINE -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- APPLICATION SCRIPTS -->
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
